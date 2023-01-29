@@ -3,24 +3,46 @@ pragma solidity 0.8.17;
 
 contract FilfiStorage {
 
-    uint40 internal lastAccrualTime;
-    uint8 internal pauseFlags;
-
-    mapping(address => TotalsCollateral) public totalsCollateral;
-
-    struct TotalsCollateral {
-        uint128 totalSupplyAsset;
-        uint128 _reserved;
+    struct TotalsStatistics {
+        uint104 totalSupply;
+        uint104 totalBorrow;
+        uint48 lastAccrualTime;
     }
+
+    struct NodeAsset {
+        // 3 slot
+
+        // miner address 
+        address  miner;
+        // total pledge amount of assets
+        uint128  pledgedAmt;
+        // miner balance·
+        uint128  balance;
+        // Valuation of pledged miner nodes that can be borrowed
+        uint128  valuation;
+        // The beneficiary has withdrawn the amount
+        uint128 beneficiaryWithdrawnAmt;
+    }
+
+
+    struct UserAccount {
+        int104 principal;
+        uint56 totalAccrued;
+        uint56 accrued;
+        uint40 lastAccrualTime;
+    }
+
+
+
+    uint40 internal lastAccrualTime;
+
 
     mapping(address => mapping(address => bool)) public isAllowed;
 
-    mapping(address => UserBasic) public userBasic;
+    mapping(address => UserAccount) public userAccounts;
 
-    struct UserBasic {
-        uint128 pricipal;
-        uint64 baseTrackingIndex;
-        uint64 baseTrackingAccrued;
-    }
+    mapping(address => NodeAsset) public nodeAssets;
+
+
     
 }
