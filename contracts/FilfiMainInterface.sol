@@ -12,6 +12,7 @@ abstract contract FilfiMainInterface is FilfiConfiguration, FilfiStorage, FilfiM
     error TransferInFailed();
     error TransferOutFailed();
     error Unauthorized();
+    error ChangeBeneficiaryFailed();
 
     uint64 internal constant FACTOR_SCALE = 1e16;
 
@@ -28,7 +29,7 @@ abstract contract FilfiMainInterface is FilfiConfiguration, FilfiStorage, FilfiM
 
     // Fund deposit and withdraw events
     event Supply(address indexed from, address indexed dst, uint amount);
-    event AccruedWithdraw(address indexed to, uint amount);
+    event InterestWithdraw(address indexed to, uint amount);
     event Withdraw(address indexed src, address indexed to, uint amount);
 
     // Borrow and repay events
@@ -37,6 +38,7 @@ abstract contract FilfiMainInterface is FilfiConfiguration, FilfiStorage, FilfiM
 
     // Pledge event
     event Pledge(address indexed src, address indexed dst, address indexed miner);
+    event Unpledge(address indexed src, address indexed dst, address indexed miner);
 
 
 
@@ -45,28 +47,39 @@ abstract contract FilfiMainInterface is FilfiConfiguration, FilfiStorage, FilfiM
         return owner == manager || isAllowed[owner][manager];
     }
 
-    function governor() virtual external view returns (address);
-    function pauseGuardian() virtual external view returns (address);
-
     function initializeStorage() virtual external;
+    function getNowInternal() virtual internal view returns (uint40);
 
-
+    // Fund deposit and withdraw functions
     function supply( uint amount) virtual external;
+    function interestWithdraw(uint amount) virtual external;
     function withdraw(uint amount) virtual external;
 
+    // Borrow and repay functions
     function borrow(uint amount) virtual external;
     function repay(uint amount) virtual external;
 
+
+    // Pledge function
     function pledge(address miner, uint amount) virtual external;
+    function unpledge(address miner) virtual external;
 
-    function totalSupply() virtual external view returns (uint256);
-    function totalBorrow() virtual external view returns (uint256);
-    function balanceOf(address owner) virtual public view returns (uint256);
+    // Liquidation function
+    
+    function supplyBalanceOf(address owner) virtual external view returns (uint256);
+    function borrowBalanceOf(address owner) virtual external view returns (uint256);
+    function pledgeBalanceOf(address owner) virtual external view returns (uint256);
 
-    function setBaseSupplyInterestRate(uint64 baseSupplyInterestRate) virtual external;
-    function setBaseBorrowInterestRate(uint64 baseBorrowInterestRate) virtual external;
-    function setLiquidateCollateralFactor(uint64 liquidateCollateralFactor) virtual external;
 
+    // set interest rate function
+    function setBaseSupplyInterestRate(uint baseSupplyInterestRate) virtual external;
+    function setBaseBorrowInterestRate(uint baseBorrowInterestRate) virtual external;
+    function setLiquidateCollateralFactor(uint liquidateCollateralFactor) virtual external;
+
+    function totalSupplyInterestOf(address owner) virtual external view returns (uint256);
+    function totalBorrowInterestOf(address owner) virtual external view returns (uint256);
+    function unClaimSupplyInterestOf(address owner) virtual external view returns (uint256);
+    function unClaimBorrowInterestOf(address owner) virtual external view returns (uint256);
 
 
 }
