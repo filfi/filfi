@@ -16,9 +16,9 @@ contract Filfi is FilfiMainInterface {
         baseSupplyInterestRate = BASE_SUPPLY_INTEREST_RATE;
         liquidateCollateralFactor = LIQUIDATE_COLLATERAL_FACTOR;
 
-        totalBorrow=1e15;
-        totalSupply=1e15;
-        totalPledged=1e15;
+        // totalBorrow=1e15;
+        // totalSupply=1e15;
+        // totalPledged=1e15;
 
     }
 
@@ -146,9 +146,14 @@ contract Filfi is FilfiMainInterface {
      */
     function _accrue(address account , UserAccount memory userAcc) internal {
 
-        require(totalBorrow > 0, "totalBorrowedBalance is zero");
-        require(totalSupply > 0, "totalSupplyBalance is zero");
+        // require(totalBorrow > 0, "totalBorrowedBalance is zero");
+        // require(totalSupply > 0, "totalSupplyBalance is zero");
         require(totalBorrow <= totalSupply, "totalBorrowedBalance > totalSupplyBalance");
+
+        // If no borrowing occurs, no interest will be charged
+        // if (totalBorrow <= PRECISION_SCALE) {
+        //     return;
+        // }
 
         uint40 currentTime = getNowInternal();
         uint40 lastTime = userAcc.lastAccrualTime;
