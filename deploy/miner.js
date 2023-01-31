@@ -88,6 +88,12 @@ module.exports = async ({ deployments }) => {
         maxPriorityFeePerGas: priorityFee,
         log: true,
     })
+    await deploy("Protocol", {
+        from: deployer.address,
+        args: [],
+        maxPriorityFeePerGas: priorityFee,
+        log: true,
+    })
 }
 
-module.exports.tags = ["Loan", "Filfi"]
+module.exports.tags = ["Filfi", "Protocol", "Loan"]

@@ -5,6 +5,7 @@ import './tasks'
 import "dotenv/config"
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY
+const API_KEY = process.env.API_KEY
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.17",
@@ -17,7 +18,11 @@ module.exports = {
     hyperspace: {
       url: "https://api.hyperspace.node.glif.io/rpc/v1",
       accounts: [PRIVATE_KEY]
-    }
+    },
+    // goerli: {
+    //   url: "https://goerli.infura.io/v3/" + API_KEY,
+    //   accounts: [PRIVATE_KEY]
+    // }
   },
   paths: {
     sources: "./contracts",

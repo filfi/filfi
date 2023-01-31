@@ -11,3 +11,15 @@ REPORT_GAS=true yarn hardhat test
 yarn hardhat node
 yarn hardhat run scripts/deploy.ts
 ```
+
+Filfi testing method
+
+```
+npm install --save-dev hardhat 
+export PRIVATE_KEY=xxxxxxxxx
+export API_KEY=xxxxxx
+npx hardhat test test/FilfiDeploy.ts
+or
+npx hardhat test test/FilfiDeploy.ts --network goerli
+
+```

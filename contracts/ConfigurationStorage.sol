@@ -7,4 +7,5 @@ contract ConfigurationStorage is FilfiConfiguration {
 
     address public governor;
 
+
 }
