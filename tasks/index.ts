@@ -1,0 +1,1 @@
+exports.getBalance = require("./miner")
