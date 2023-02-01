@@ -62,7 +62,7 @@ abstract contract FilfiMainInterface is FilfiConfiguration, FilfiStorage, FilfiM
 
 
     // Pledge function
-    function pledge(address miner, uint amount) virtual external;
+    function pledge(address miner) virtual external;
     function changePledgeScale(address miner, uint32 scale) virtual external;
     function unpledge(address miner) virtual external;
 

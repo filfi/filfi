@@ -123,12 +123,10 @@ contract Filfi is FilfiUtil {
     /**
      * @notice pledge miner to the contract
      */
-    function pledge(address miner,uint amount) override external {
-        if (amount == 0) return;
-        changeBeneficiary();
-
+    function pledge(address miner) override external {
         NodeAsset memory node =  nodeAssets[msg.sender][miner];
         require(node.miner==address(0), "miner already exist");
+        changeBeneficiary();
 
         NodeAsset memory assetInfo = getAssetInfoByMiner(miner);
         assetInfo.pledgeScale= 0 ;
