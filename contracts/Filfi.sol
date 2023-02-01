@@ -12,9 +12,6 @@ import "@zondax/filecoin-solidity/contracts/v0.8/cbor/BigIntCbor.sol";
 contract Filfi is FilfiMainInterface {
 
     using BigIntCBOR for BigInt;
-    // address public override immutable governor;
-
-    // address public override immutable pauseGuardian;
 
     event Logger(BigInt msg);
 
@@ -29,16 +26,10 @@ contract Filfi is FilfiMainInterface {
         baseSupplyInterestRate = BASE_SUPPLY_INTEREST_RATE;
         liquidateCollateralFactor = LIQUIDATE_COLLATERAL_FACTOR;
 
-        // totalBorrow=1e15;
-        // totalSupply=1e15;
-        // totalPledged=1e15;
-
     }
-
 
     /**
      * @notice Initialize the market
-     * @dev This function must be called exactly once
      */
     function initializeStorage() override external {
         if (lastAccrualTime != 0) revert AlreadyInitialized();
@@ -48,10 +39,7 @@ contract Filfi is FilfiMainInterface {
 
     /**
      * @notice Get the current block timestamp, with a protection against overflow
-     * @dev This function is virtual so it can be mocked in tests
-     * @return The current block timestamp, as a uint40
      */
-
     function getNowInternal() virtual override internal view returns (uint40) {
         if (block.timestamp >= 2**40) revert TimestampTooLarge();
         return uint40(block.timestamp);
@@ -81,19 +69,12 @@ contract Filfi is FilfiMainInterface {
     }
 
     /**
-     * @notice Transfer tokens in of the market
-     * @dev This function is external so it can be called by other contracts
-     * @param amount The number of tokens to transfer
+     * @notice Deposit funds into the contract to provide liquidity and obtain income.
     */
-
     function supply( uint amount) override external {
-        _supply(msg.sender, amount);
-    }
-
-    // internal supply  function
-    function _supply(address from, uint amount) internal {
         if (amount == 0) return;
-        doTransferIn( from, amount);
+
+        // todo  Call the built-in method to transfer FIl into the contract， doTransferIn(from, amount);
         // accrue interest
         accrueAccount(from);
 
