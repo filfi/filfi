@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("Test Filfi contract", function() {
-  it("Deployment should assign the total supply of tokens to the owner", async function() {
+  it("Deployment should assign  of tokens to the owner", async function() {
     const [owner] = await ethers.getSigners();
 
     const FilFi = await ethers.getContractFactory("Filfi");

@@ -10,12 +10,12 @@ contract FilfiStorage {
     address public baseToken;
 
     // system total supply、total borrow、total pledge
-    struct TotalsStatistics {
-        uint128 totalSupply;
-        uint128 totalBorrow;
-        uint128 totalPledged;
-        uint40 lastAccrualTime;
-    }
+    // struct TotalsStatistics {
+    //     uint128 totalSupply;
+    //     uint128 totalBorrow;
+    //     uint128 totalPledged;
+    //     uint40 lastAccrualTime;
+    // }
 
     // node asset information
     struct NodeAsset {
@@ -23,6 +23,8 @@ contract FilfiStorage {
 
         // miner address 
         address  miner;
+        // pledge scale
+        uint32 pledgeScale;
         // total pledge amount of assets
         uint128  pledgedAmt;
         // miner balance·
@@ -31,6 +33,8 @@ contract FilfiStorage {
         uint128  canBorrowedBalance;
         // The beneficiary has withdrawn the amount
         uint128 beneficiaryWithdrawnAmt;
+
+
     }
 
     // user account information
@@ -61,7 +65,7 @@ contract FilfiStorage {
     uint64 internal liquidateCollateralFactor;
     uint40 internal lastAccrualTime;
 
-    TotalsStatistics internal totalsStatistics;
+    // TotalsStatistics internal totalsStatistics;
 
     mapping(address => mapping(address => bool)) public isAllowed;
 
