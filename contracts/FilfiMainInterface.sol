@@ -38,6 +38,7 @@ abstract contract FilfiMainInterface is FilfiConfiguration, FilfiStorage, FilfiM
 
     // Pledge event
     event Pledge(address indexed src, address indexed dst, address indexed miner);
+    event ChangePledgeScale(address indexed miner, uint64 scale);
     event Unpledge(address indexed src, address indexed dst, address indexed miner);
 
 
@@ -61,7 +62,8 @@ abstract contract FilfiMainInterface is FilfiConfiguration, FilfiStorage, FilfiM
 
 
     // Pledge function
-    function pledge(address miner, uint amount) virtual external;
+    function pledge(address miner) virtual external;
+    function changePledgeScale(address miner, uint32 scale) virtual external;
     function unpledge(address miner) virtual external;
 
     // Liquidation function

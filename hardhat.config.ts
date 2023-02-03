@@ -11,6 +11,9 @@ module.exports = {
   solidity: "0.8.17",
   defaultNetwork: "hyperspace",
   networks: {
+    hardhat: {
+      allowUnlimitedContractSize: true
+    },
     // wallaby: {
     //   url: "https://wallaby.node.glif.io/rpc/v0	",
     //   accounts: [PRIVATE_KEY],

@@ -18,8 +18,11 @@ Filfi testing method
 npm install --save-dev hardhat 
 export PRIVATE_KEY=xxxxxxxxx
 export API_KEY=xxxxxx
-npx hardhat test test/FilfiDeploy.ts
-or
-npx hardhat test test/FilfiDeploy.ts --network goerli
+
+Network name:	Filecoin Hyperspace testnet
+New RPC URL	:https://api.hyperspace.node.glif.io/rpc/v1
+Chain ID	:3141
+Currency symbol:	tFIL
+
 
 ```
