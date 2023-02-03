@@ -11,7 +11,6 @@ task("get-owner", "")
     const contractAddr = taskArgs.contractaddress
     const {minerid} = taskArgs
     const networkId = network.name
-    console.log(111)
     
     async function callRpc(method: string, params: any) {
       var options = {
@@ -42,12 +41,13 @@ task("get-owner", "")
     const signer = accounts[0]
 
     const simpleCoinContract = new ethers.Contract(contractAddr, SimpleCoin.interface, signer)
-    let result = await simpleCoinContract.getAvailableBalance("t01000", {
+    console.log(simpleCoinContract)
+    let result = await simpleCoinContract.getOwner( {
         gasLimit: 1000000000,
-        maxPriorityFeePerGas: priorityFee
+        maxPriorityFeePerGas: priorityFee,
+        // value: ethers.utils.parseEther("0.1"),
       })
     console.log("owner balance:", result)
-
   })
 
 
@@ -58,7 +58,6 @@ task("change-beneficiary", "")
     const contractAddr = taskArgs.contractaddress
     const {minerid} = taskArgs
     const networkId = network.name
-    console.log(111)
     
     async function callRpc(method: string, params: any) {
       var options = {
@@ -82,18 +81,20 @@ task("change-beneficiary", "")
     const priorityFee = await callRpc("eth_maxPriorityFeePerGas", [])
 
 
-    console.log("Calling getOwner method")
-    const SimpleCoin = await ethers.getContractFactory("Filfi")
+    console.log("Calling changeBeneficiary method")
     //Get signer information
     const accounts = await ethers.getSigners()
     const signer = accounts[0]
 
+    const SimpleCoin = await ethers.getContractFactory("Loan")
     const simpleCoinContract = new ethers.Contract(contractAddr, SimpleCoin.interface, signer)
-    let result = await simpleCoinContract.changeBeneficiary({
+    let utf8Encode = new TextEncoder();
+    
+    let result = await simpleCoinContract.getOwner(utf8Encode.encode("t01129"), {
         gasLimit: 1000000000,
         maxPriorityFeePerGas: priorityFee
       })
-    console.log("owner balance:", result)
+    console.log("changeBeneficiary result:", result)
 
   })
   

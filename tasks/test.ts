@@ -7,7 +7,7 @@ const request = util.promisify(require("request"));
 task("transfer", "")
   .addParam("contract", "")
   .setAction(async (taskArgs, {network, ethers}) => {
-    const contractAddr = taskArgs.contract
+    const contractAddr = taskArgs.contractaddress
     const networkId = network.name
     
     async function callRpc(method: string, params: any) {
