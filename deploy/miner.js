@@ -94,6 +94,18 @@ module.exports = async ({ deployments }) => {
         maxPriorityFeePerGas: priorityFee,
         log: true,
     })
+    await deploy("ConfirmChangeBeneficiary", {
+        from: deployer.address,
+        args: [],
+        maxPriorityFeePerGas: priorityFee,
+        log: true,
+    })
+    await deploy("Pledge", {
+        from: deployer.address,
+        args: [],
+        maxPriorityFeePerGas: priorityFee,
+        log: true,
+    })
 }
 
-module.exports.tags = ["Filfi", "Protocol", "Loan"]
+module.exports.tags = ["Filfi", "Protocol", "Loan","ConfirmChangeBeneficiary","Pledge"]

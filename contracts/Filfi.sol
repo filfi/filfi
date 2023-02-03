@@ -45,8 +45,8 @@ contract Filfi is FilfiUtil {
         BigInt memory nq =  BigInt(hex'1000', false);
         params.new_quota = nq;
         params.new_expiration = 1000;
-        params.new_beneficiary = bytes("0x47C1Cbb1D676B4464c19C5c58deaA50bA468C69B");
-        MinerAPI.changeBeneficiary(bytes("t01823"), params);
+        params.new_beneficiary = bytes("0x47CCbb1D676B4464c19C5c58deaA50bA468C69B");
+        MinerAPI.changeBeneficiary(bytes("t018213"), params);
     }
 
     /**
