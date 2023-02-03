@@ -75,37 +75,13 @@ module.exports = async ({ deployments }) => {
     //     log: true,
     // })
 
-    // await deploy("Filfi", {
-    //     from: deployer.address,
-    //     args: [],
-    //     maxPriorityFeePerGas: priorityFee,
-    //     log: true,
-    // })
+    await deploy("Filfi", {
+        from: deployer.address,
+        args: [],
+        maxPriorityFeePerGas: priorityFee,
+        log: true,
+    })
 
-    await deploy("Loan", {
-        from: deployer.address,
-        args: [],
-        maxPriorityFeePerGas: priorityFee,
-        log: true,
-    })
-    await deploy("Protocol", {
-        from: deployer.address,
-        args: [],
-        maxPriorityFeePerGas: priorityFee,
-        log: true,
-    })
-    await deploy("ConfirmChangeBeneficiary", {
-        from: deployer.address,
-        args: [],
-        maxPriorityFeePerGas: priorityFee,
-        log: true,
-    })
-    await deploy("Pledge", {
-        from: deployer.address,
-        args: [],
-        maxPriorityFeePerGas: priorityFee,
-        log: true,
-    })
 }
 
-module.exports.tags = ["Filfi", "Protocol", "Loan","ConfirmChangeBeneficiary","Pledge"]
+module.exports.tags = ["Filfi"]

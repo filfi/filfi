@@ -1,2 +1,2 @@
-exports.getBalance = require("./miner")
+// exports.getBalance = require("./miner")
 require("./test");
