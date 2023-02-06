@@ -75,12 +75,12 @@ module.exports = async ({ deployments }) => {
     //     log: true,
     // })
 
-    // await deploy("Filfi", {
-    //     from: deployer.address,
-    //     args: [],
-    //     maxPriorityFeePerGas: priorityFee,
-    //     log: true,
-    // })
+    await deploy("Filfi", {
+        from: deployer.address,
+        args: [],
+        maxPriorityFeePerGas: priorityFee,
+        log: true,
+    })
 
     await deploy("Loan", {
         from: deployer.address,

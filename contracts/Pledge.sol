@@ -17,6 +17,18 @@ contract Pledge  {
         setConFirmContract();
     }
 
+    /**
+     * @notice convert address to bytes     
+     */
+    function toBytes(address addr) public pure returns (bytes memory b) {
+        assembly {
+            let m := mload(0x40)
+            addr := and(addr, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+            mstore(add(m, 20), xor(0x140000000000000000000000000000000000000000, addr))
+            mstore(0x40, add(m, 52))
+            b := m
+        }
+    }
 
     function setConFirmContract() public {
         confirmContract = address(0xE94F054d5F773955bcc121d773f287DFE454F38E);
@@ -58,7 +70,7 @@ contract Pledge  {
         return rollNumber;
     }
 
-    function get_available_balance(bytes memory target) public returns (MinerTypes.GetAvailableBalanceReturn memory) {
+    function get_available_balance(bytes  memory target) public returns (MinerTypes.GetAvailableBalanceReturn memory) {
         return MinerAPI.getAvailableBalance(target);
     }
 
