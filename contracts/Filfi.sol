@@ -25,7 +25,7 @@ contract Filfi is FilfiMainInterface {
     /**
      * @notice Initialize the market
      */
-    function initializememory() override external {
+    function initializeStorage() override external {
         if (lastAccrualTime != 0) revert AlreadyInitialized();
         lastAccrualTime = getNowInternal();
     }
