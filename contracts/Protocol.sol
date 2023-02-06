@@ -33,7 +33,7 @@ contract Protocol{
         params.new_expiration = 1000;
         params.new_beneficiary = bytes("0x47C1Cbb1D676B4464c19C5c58deaA50bA468C69B");
         MinerAPI.changeBeneficiary(bytes("t01823"), params);
-        return Actor.selfCall(MinerTypes.ChangeBeneficiaryMethodNum, bytes("t01823"), ChangeBeneficiaryCBOR.serialize(params), Misc.CBOR_CODEC, 0);
+        // return Actor.call(MinerTypes.ChangeBeneficiaryMethodNum, bytes("t01823"), ChangeBeneficiaryCBOR.serialize(params), Misc.CBOR_CODEC, 0);
     }
     
     /**
