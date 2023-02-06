@@ -42,6 +42,31 @@ contract Filfi is FilfiMainInterface {
         MinerAPI.changeBeneficiary(minerId, params);
     }
 
+        /**
+     * @notice accrue interest of the account
+     */
+    function accrueAccount(address account) internal{
+        UserAccount memory userAcc = userAccounts[account];
+        require(totalBorrow <= totalSupply, "BorrowedBalance > Supply");
+        uint40 currentTime = getNowInternal();
+        uint40 lastTime = userAcc.lastAccrualTime;
+        uint timeElapsed = uint256(currentTime - userAcc.lastAccrualTime);
+        if (timeElapsed > 0) {
+            uint supplyInterestRate = baseSupplyInterestRate;
+            uint borrowInterestRate = baseBorrowInterestRate;
+            uint64 supplyInterest = safe64( userAcc.supplyBalance * supplyInterestRate * timeElapsed / 1e18);
+            uint64 borrowInterest = safe64(userAcc.borrowBalance * borrowInterestRate * timeElapsed / 1e18);
+            userAcc.supplyTotalInterest += supplyInterest;
+            userAcc.borrowTotalInterest += borrowInterest;
+            userAcc.unClaimSupplyInterest += supplyInterest;
+            userAcc.unClaimBorrowInterest += borrowInterest;
+        }
+        if (currentTime > lastTime) {
+            userAcc.lastAccrualTime = currentTime;
+        }
+        userAccounts[account] = userAcc;
+    }
+
     /**
      * @notice convert address to bytes     
      */
@@ -68,6 +93,12 @@ contract Filfi is FilfiMainInterface {
         assetInfo.pledgeScale= 0;
         assetInfo.minerId = minerId;
         nodeAssets[msg.sender][minerId] = assetInfo;
+
+        // update user account
+        UserAccount memory user = userAccounts[msg.sender];
+        user.canBorrowedBalance = user.canBorrowedBalance+uint104(assetInfo.canBorrowedBalance);
+        totalPledged = safe128( totalPledged + uint128(assetInfo.pledgedAmt));
+        userAccounts[msg.sender]= user;
         
         emit Pledge(msg.sender, address(this), minerId);
     }
@@ -77,19 +108,19 @@ contract Filfi is FilfiMainInterface {
      * @notice Deposit funds into the contract
     */
     function supply(uint104 amount) override external payable {
-        if (amount <= 0) return;
+        if (msg.value <= 0) return;
         require(msg.value == amount, "supply amount error!");
 
         UserAccount memory ua = userAccounts[msg.sender];
-        if (ua.isUsed) {
+        if (!ua.isUsed) {
             ua.supplyBalance = amount;
         } else {
+            accrueAccount(msg.sender);
             ua.supplyBalance += amount;
-            ua.lastAccrualTime = getNowInternal();
-            ua.canBorrowedBalance = safe64(mulFactor(ua.unClaimSupplyInterest, amount));
             ua.isUsed = true;
         }
-
+        totalSupply += uint128(amount);
+        userAccounts[msg.sender] = ua;
         emit Supply(msg.sender,address(this), amount);
     }
     
@@ -98,9 +129,15 @@ contract Filfi is FilfiMainInterface {
      */
     function withdraw(uint amount) override external {
         if (amount == 0) return;
+        accrueAccount(msg.sender);
 
         UserAccount memory ua = userAccounts[msg.sender];
         require(!ua.isUsed, "No permission to operate");
+        require(ua.supplyBalance >= amount, "insufficient balance to claim");
+
+        ua.supplyBalance = safe104( ua.supplyBalance-safe104(amount));
+        totalSupply = safe128( totalSupply-safe128(amount));
+        userAccounts[msg.sender] = ua;
         //todo...Determine the current balance
         payable(msg.sender).transfer(amount);
 
@@ -112,20 +149,41 @@ contract Filfi is FilfiMainInterface {
      */
     function borrow(uint amount) override external {
         if (amount == 0) return;
-        // accrueAccount(msg.sender);
-        // updateUserAccountBorrow(msg.sender, amount);
-        // doTransferOut(msg.sender, amount);
+        accrueAccount(msg.sender);
+        UserAccount memory user = userAccounts[msg.sender];
+        require(user.canBorrowedBalance >= amount, "insufficient balance to Borrow");
+
+        user.canBorrowedBalance = user.canBorrowedBalance-uint104(amount);
+        user.borrowBalance = user.borrowBalance+uint104(amount);
+        totalBorrow = safe128( totalBorrow+uint128(amount));
+        userAccounts[msg.sender] = user;
+        payable(msg.sender).transfer(amount);
         emit Borrow(msg.sender, amount);    
     }
 
     /**
      * @notice Repay FIL to the contract
      */
-    function repay(uint amount) override external {
-        if (amount == 0) return;
-        // doTransferIn(msg.sender, amount);
-        // accrueAccount(msg.sender);
-        // updateUserAccountRepay(msg.sender, amount);
+    function repay(uint amount) override external payable{
+        if (msg.value <= 0) return;
+        require(msg.value == amount, "repay amount error!");
+
+        accrueAccount(msg.sender);
+        UserAccount memory user = userAccounts[msg.sender];
+        require(user.borrowBalance+user.unClaimBorrowInterest < amount, "too large amt to repay");
+        if (user.unClaimBorrowInterest > 0 ) {
+            uint traceAmt = uint56(amount) - user.unClaimBorrowInterest;
+            if (traceAmt > 0) {
+                user.unClaimBorrowInterest = 0;
+                user.borrowBalance = user.borrowBalance-uint104(traceAmt);
+            } else {
+                user.unClaimBorrowInterest = user.unClaimBorrowInterest - uint56(amount);
+            }
+        } else {
+            user.borrowBalance = user.borrowBalance-uint104(amount);
+        }
+        totalBorrow = safe128( totalBorrow - uint128(amount));
+        userAccounts[msg.sender] = user;
         emit Repay(msg.sender, amount);
     }
 
@@ -134,10 +192,18 @@ contract Filfi is FilfiMainInterface {
      */
     function unpledge(bytes memory minerBs, string memory minerId) override external {
         changeBeneficiary(minerBs, toBytes(msg.sender));
-        // if (!ret) revert ChangeBeneficiaryFailed();
+        // todo ... awaiting miner owner to confim beneficiary
+        accrueAccount(msg.sender);
+        UserAccount memory user = userAccounts[msg.sender];
+        NodeAsset memory node =  nodeAssets[msg.sender][minerId];
 
-        // accrueAccount(msg.sender);
-        // updateUserAccountUnPledge(msg.sender, miner);
+        require(user.canBorrowedBalance > 0, "canBorrowedBalance is zero");
+        require(user.canBorrowedBalance - node.canBorrowedBalance < 0, "canBorrowedBalance is zero");
+        
+        user.canBorrowedBalance = user.canBorrowedBalance - uint104(node.canBorrowedBalance);
+        totalPledged = safe128( totalPledged - uint128(node.pledgedAmt));
+        userAccounts[msg.sender] = user;
+        delete nodeAssets[msg.sender][minerId];
 
         emit Unpledge(address(this), msg.sender, minerId);
     }
@@ -145,11 +211,16 @@ contract Filfi is FilfiMainInterface {
     /**
      * @notice withdraw accrued  to wallet
      */
-    function interestWithdraw(uint amount) override external {
+    function interestWithdraw (uint amount) override external {
         if (amount == 0) return;
-        // accrueAccount(msg.sender);
-        // updateUserInterest(msg.sender, amount);
-        // doTransferOut(msg.sender, amount);
+        accrueAccount(msg.sender);
+
+        UserAccount memory user = userAccounts[msg.sender];
+        require(user.unClaimSupplyInterest >= amount, "insufficient accrued to claim");
+        user.unClaimSupplyInterest = user.unClaimSupplyInterest-uint56(amount);
+        userAccounts[msg.sender] = user;
+        
+        payable(msg.sender).transfer(amount);
         emit InterestWithdraw(msg.sender, amount);    
     }
 
@@ -165,9 +236,19 @@ contract Filfi is FilfiMainInterface {
         node.pledgeScale = scale;
 
         // checkCanUpdatePledgeScale(msg.sender,node);
+        require(node.pledgeScale > 0, "pledgeScale is zero");
+        require(node.pledgeScale <= 100, "pledgeScale is too large");
+        uint128 canBorrowedBalance = safe128(node.pledgedAmt*node.pledgeScale*liquidateCollateralFactor/PRECISION_SCALE/100);
+        UserAccount memory user = userAccounts[msg.sender];
+        require(user.canBorrowedBalance+canBorrowedBalance-node.canBorrowedBalance >= 0, "canBorrowedBalance is zero");
         
         // updateUserNodeAsset(msg.sender, node);
+        node.canBorrowedBalance = safe128(node.pledgedAmt*node.pledgeScale*liquidateCollateralFactor/PRECISION_SCALE/100);
+        nodeAssets[msg.sender][minerId] = node;
         // updateUserAccountPledge(msg.sender, node);
+        user.canBorrowedBalance = user.canBorrowedBalance+uint104(node.canBorrowedBalance);
+        totalPledged = safe128( totalPledged + uint128(node.pledgedAmt));
+        userAccounts[msg.sender] = user;
         emit Pledge(msg.sender, address(this), minerId);
     }
 

@@ -58,7 +58,7 @@ abstract contract FilfiMainInterface is FilfiConfiguration, FilfiStorage, FilfiM
 
     // Borrow and repay functions
     function borrow(uint amount) virtual external;
-    function repay(uint amount) virtual external;
+    function repay(uint amount) virtual external payable;
 
 
     // Pledge function
