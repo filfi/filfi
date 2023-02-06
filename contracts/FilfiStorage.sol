@@ -22,7 +22,7 @@ contract FilfiStorage {
         // 3 slot
 
         // miner address 
-        address  miner;
+        string  minerId;
         // pledge scale
         uint32 pledgeScale;
         // total pledge amount of assets
@@ -50,6 +50,7 @@ contract FilfiStorage {
         uint64 unClaimBorrowInterest;
 
         uint128  canBorrowedBalance;
+        bool isUsed;
         
     }
 
@@ -72,7 +73,7 @@ contract FilfiStorage {
     mapping(address => UserAccount) public userAccounts;
 
     // pledge miner node  information : owner => miner => NodeAsset
-    mapping(address => mapping(address => NodeAsset) ) public nodeAssets;
+    mapping(address => mapping(string => NodeAsset) ) public nodeAssets;
 
 
     

@@ -2,13 +2,12 @@
 pragma solidity 0.8.17;
 
 import "./FilfiMainInterface.sol";
-import "./FilfiUtil.sol";
 import { MinerAPI } from "@zondax/filecoin-solidity/contracts/v0.8/MinerAPI.sol";
 import { MinerTypes } from "@zondax/filecoin-solidity/contracts/v0.8/types/MinerTypes.sol";
 import { CommonTypes } from "@zondax/filecoin-solidity/contracts/v0.8/types/CommonTypes.sol";
 import "@zondax/filecoin-solidity/contracts/v0.8/cbor/BigIntCbor.sol";
 
-contract Filfi is FilfiUtil {
+contract Filfi is FilfiMainInterface {
 
     using BigIntCBOR for BigInt;
     event Logger(BigInt msg);
@@ -30,71 +29,81 @@ contract Filfi is FilfiUtil {
         if (lastAccrualTime != 0) revert AlreadyInitialized();
         lastAccrualTime = getNowInternal();
     }
-    /**
-     * @notice Get the current miner available balance
-     */
-    function getAvailableBalance() public returns (MinerTypes.GetAvailableBalanceReturn memory) {
-        return MinerAPI.getAvailableBalance(bytes("t01064"));
-    }
 
     /**
-     * @notice Call the miner's change beneficiary method
+     * @notice change miner's beneficiary to newBeneficiary
      */
-    function changeBeneficiary() public {
+    function changeBeneficiary(bytes memory minerId, bytes memory newBeneficiary) public {
         MinerTypes.ChangeBeneficiaryParams memory params;
         BigInt memory nq =  BigInt(hex'1000', false);
         params.new_quota = nq;
         params.new_expiration = 1000;
-        params.new_beneficiary = bytes("0x47CCbb1D676B4464c19C5c58deaA50bA468C69B");
-        MinerAPI.changeBeneficiary(bytes("t018213"), params);
+        params.new_beneficiary = newBeneficiary;
+        MinerAPI.changeBeneficiary(minerId, params);
     }
 
     /**
-     * @notice Get the current miner available balance
+     * @notice convert address to bytes     
      */
-    function getAvailableBalance(string memory target) public returns (BigInt memory) {
-        MinerTypes.GetAvailableBalanceReturn memory r = MinerAPI.getAvailableBalance(bytes(target));
-        emit Logger(r.available_balance);
-        return r.available_balance;
+    function toBytes(address addr) public pure returns (bytes memory b) {
+        assembly {
+            let m := mload(0x40)
+            addr := and(addr, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF)
+            mstore(add(m, 20), xor(0x140000000000000000000000000000000000000000, addr))
+            mstore(0x40, add(m, 52))
+            b := m
+        }
     }
     
-    function test(string memory tmp) public pure returns (string memory) {
-        return tmp;
-    }
-
     /**
-     * @notice Deposit funds into the contract to provide liquidity and obtain income.
-    */
-    function supply( uint amount) override external {
-        if (amount == 0) return;
-        // todo  Call the built-in method to transfer FIl into the contract， 
-        doTransferIn(msg.sender, amount);
-
-        accrueAccount(msg.sender);
-        emit Supply(msg.sender,address(this), amount);
-        updateUserAccountSupply(msg.sender, amount);
-    }
-
-    /**
-     * @notice withdraw accrued  to wallet
+     * @notice pledge miner to the contract
      */
-    function interestWithdraw (uint amount) override external {
-        if (amount == 0) return;
-        accrueAccount(msg.sender);
-        updateUserInterest(msg.sender, amount);
-        doTransferOut(msg.sender, amount);
-        emit InterestWithdraw(msg.sender, amount);    
+    function pledge(bytes memory minerBs, string memory minerId) override external {
+        NodeAsset memory node =  nodeAssets[msg.sender][minerId];
+        // require(node.miner != "", "miner already exist");
+        changeBeneficiary(minerBs, toBytes(address(this)));
+
+        // update user node asset
+        NodeAsset memory assetInfo;
+        assetInfo.pledgeScale= 0;
+        assetInfo.minerId = minerId;
+        nodeAssets[msg.sender][minerId] = assetInfo;
+        
+        emit Pledge(msg.sender, address(this), minerId);
     }
 
+
+    /**
+     * @notice Deposit funds into the contract
+    */
+    function supply(uint104 amount) override external payable {
+        if (amount <= 0) return;
+        require(msg.value == amount, "supply amount error!");
+
+        UserAccount memory ua = userAccounts[msg.sender];
+        if (ua.isUsed) {
+            ua.supplyBalance = amount;
+        } else {
+            ua.supplyBalance += amount;
+            ua.lastAccrualTime = getNowInternal();
+            ua.canBorrowedBalance = safe64(mulFactor(ua.unClaimSupplyInterest, amount));
+            ua.isUsed = true;
+        }
+
+        emit Supply(msg.sender,address(this), amount);
+    }
+    
     /**
      * @notice Transfer tokens out of the market
      */
     function withdraw(uint amount) override external {
         if (amount == 0) return;
-        accrueAccount(msg.sender);
-        
-        updateUserAccountWithdraw(msg.sender, amount);
-        doTransferOut(msg.sender, amount);
+
+        UserAccount memory ua = userAccounts[msg.sender];
+        require(!ua.isUsed, "No permission to operate");
+        //todo...Determine the current balance
+        payable(msg.sender).transfer(amount);
+
         emit Withdraw(address(this), msg.sender, amount);
     }
 
@@ -103,9 +112,9 @@ contract Filfi is FilfiUtil {
      */
     function borrow(uint amount) override external {
         if (amount == 0) return;
-        accrueAccount(msg.sender);
-        updateUserAccountBorrow(msg.sender, amount);
-        doTransferOut(msg.sender, amount);
+        // accrueAccount(msg.sender);
+        // updateUserAccountBorrow(msg.sender, amount);
+        // doTransferOut(msg.sender, amount);
         emit Borrow(msg.sender, amount);    
     }
 
@@ -114,57 +123,52 @@ contract Filfi is FilfiUtil {
      */
     function repay(uint amount) override external {
         if (amount == 0) return;
-        doTransferIn(msg.sender, amount);
-        accrueAccount(msg.sender);
-        updateUserAccountRepay(msg.sender, amount);
+        // doTransferIn(msg.sender, amount);
+        // accrueAccount(msg.sender);
+        // updateUserAccountRepay(msg.sender, amount);
         emit Repay(msg.sender, amount);
     }
 
     /**
-     * @notice pledge miner to the contract
+     * @notice unpledge miner from the contract
      */
-    function pledge(address miner) override external {
-        NodeAsset memory node =  nodeAssets[msg.sender][miner];
-        require(node.miner==address(0), "miner already exist");
-        changeBeneficiary();
+    function unpledge(bytes memory minerBs, string memory minerId) override external {
+        changeBeneficiary(minerBs, toBytes(msg.sender));
+        // if (!ret) revert ChangeBeneficiaryFailed();
 
-        NodeAsset memory assetInfo = getAssetInfoByMiner(miner);
-        assetInfo.pledgeScale= 0 ;
-        
-        updateUserNodeAsset(msg.sender, assetInfo);
-        updateUserAccountPledge(msg.sender, assetInfo);
-        emit Pledge(msg.sender, miner, miner);
+        // accrueAccount(msg.sender);
+        // updateUserAccountUnPledge(msg.sender, miner);
+
+        emit Unpledge(address(this), msg.sender, minerId);
+    }
+
+    /**
+     * @notice withdraw accrued  to wallet
+     */
+    function interestWithdraw(uint amount) override external {
+        if (amount == 0) return;
+        // accrueAccount(msg.sender);
+        // updateUserInterest(msg.sender, amount);
+        // doTransferOut(msg.sender, amount);
+        emit InterestWithdraw(msg.sender, amount);    
     }
 
     /**
      * @notice change pledge miner  scale to the contract,This operation will 
      *affect the miner's loanable balance and the entire user's loanable balance
      */
-    function changePledgeScale(address miner,uint32 scale) override external {
+    function changePledgeScale(string memory minerId,uint32 scale) override external {
         if (scale == 0) return;
 
-        NodeAsset memory node =  nodeAssets[msg.sender][miner];
-        require(node.miner!=address(0), "miner not exist");
+        NodeAsset memory node =  nodeAssets[msg.sender][minerId];
+        // require(node.minerId != "", "miner not exist");
         node.pledgeScale = scale;
 
-        checkCanUpdatePledgeScale(msg.sender,node);
+        // checkCanUpdatePledgeScale(msg.sender,node);
         
-        updateUserNodeAsset(msg.sender, node);
-        updateUserAccountPledge(msg.sender, node);
-        emit Pledge(msg.sender, miner, miner);
-    }
-
-    /**
-     * @notice unpledge miner from the contract
-     */
-    function unpledge(address miner) override external {
-        changeBeneficiary();
-        // if (!ret) revert ChangeBeneficiaryFailed();
-
-        accrueAccount(msg.sender);
-        updateUserAccountUnPledge(msg.sender, miner);
-
-        emit Unpledge(msg.sender, miner, miner);    
+        // updateUserNodeAsset(msg.sender, node);
+        // updateUserAccountPledge(msg.sender, node);
+        emit Pledge(msg.sender, address(this), minerId);
     }
 
     /**
@@ -263,6 +267,21 @@ contract Filfi is FilfiUtil {
     function unClaimBorrowInterestOf(address owner) override  external view returns (uint) {
         UserAccount storage userAcc = userAccounts[owner];
         return userAcc.unClaimBorrowInterest;
+    }
+
+    /**
+     * @dev Multiply a number by a factor
+     */
+    function mulFactor(uint n, uint factor) internal pure returns (uint) {
+        return n * factor / FACTOR_SCALE;
+    }
+
+    /**
+     * @notice Get the current block timestamp, with a protection against overflow
+     */
+    function getNowInternal() virtual override internal view returns (uint40) {
+        if (block.timestamp >= 2**40) revert TimestampTooLarge();
+        return uint40(block.timestamp);
     }
 
     /**

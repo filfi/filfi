@@ -37,9 +37,9 @@ abstract contract FilfiMainInterface is FilfiConfiguration, FilfiStorage, FilfiM
     event Repay(address indexed src,  uint amount);
 
     // Pledge event
-    event Pledge(address indexed src, address indexed dst, address indexed miner);
+    event Pledge(address indexed src, address indexed dst, string indexed minerId);
     event ChangePledgeScale(address indexed miner, uint64 scale);
-    event Unpledge(address indexed src, address indexed dst, address indexed miner);
+    event Unpledge(address indexed src, address indexed dst, string indexed miner);
 
 
 
@@ -52,7 +52,7 @@ abstract contract FilfiMainInterface is FilfiConfiguration, FilfiStorage, FilfiM
     function getNowInternal() virtual internal view returns (uint40);
 
     // Fund deposit and withdraw functions
-    function supply( uint amount) virtual external;
+    function supply( uint104 amount) virtual external payable;
     function interestWithdraw(uint amount) virtual external;
     function withdraw(uint amount) virtual external;
 
@@ -62,9 +62,9 @@ abstract contract FilfiMainInterface is FilfiConfiguration, FilfiStorage, FilfiM
 
 
     // Pledge function
-    function pledge(address miner) virtual external;
-    function changePledgeScale(address miner, uint32 scale) virtual external;
-    function unpledge(address miner) virtual external;
+    function pledge(bytes memory minerBs, string memory minerId) virtual external;
+    function changePledgeScale(string memory minerId, uint32 scale) virtual external;
+    function unpledge(bytes memory minerBs, string memory minerId) virtual external;
 
     // Liquidation function
     
