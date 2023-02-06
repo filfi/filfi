@@ -22,10 +22,11 @@ module.exports = {
       url: "https://api.hyperspace.node.glif.io/rpc/v1",
       accounts: [PRIVATE_KEY]
     },
-    // goerli: {
-    //   url: "https://goerli.infura.io/v3/" + API_KEY,
-    //   accounts: [PRIVATE_KEY]
-    // }
+    goerli: {
+      allowUnlimitedContractSize: true,
+      url: "https://goerli.infura.io/v3/" + API_KEY,
+      accounts: [PRIVATE_KEY]
+    }
   },
   paths: {
     sources: "./contracts",

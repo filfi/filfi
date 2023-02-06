@@ -114,10 +114,10 @@ contract Filfi is FilfiMainInterface {
         UserAccount memory ua = userAccounts[msg.sender];
         if (!ua.isUsed) {
             ua.supplyBalance = amount;
+            ua.isUsed = true;
         } else {
             accrueAccount(msg.sender);
             ua.supplyBalance += amount;
-            ua.isUsed = true;
         }
         totalSupply += uint128(amount);
         userAccounts[msg.sender] = ua;
@@ -256,7 +256,7 @@ contract Filfi is FilfiMainInterface {
      * @notice Get the total amount of supply
      **/
     function supplyBalanceOf(address owner) override external view returns (uint) {
-        UserAccount storage userAcc = userAccounts[owner];
+        UserAccount memory userAcc = userAccounts[owner];
         return userAcc.supplyBalance;
     }
 
@@ -264,7 +264,7 @@ contract Filfi is FilfiMainInterface {
      * @notice Get the total amount of borrow
      **/
     function borrowBalanceOf(address owner) override external view returns (uint) {
-        UserAccount storage userAcc = userAccounts[owner];
+        UserAccount memory userAcc = userAccounts[owner];
         return userAcc.borrowBalance;
     }
 
@@ -272,7 +272,7 @@ contract Filfi is FilfiMainInterface {
      * @notice Get the total amount of pledge
      **/
     function pledgeBalanceOf(address owner) override external view returns (uint) {
-        UserAccount storage userAcc = userAccounts[owner];
+        UserAccount memory userAcc = userAccounts[owner];
         return  userAcc.canBorrowedBalance;
     }
 
@@ -322,7 +322,7 @@ contract Filfi is FilfiMainInterface {
      * @notice Get the total amount of supply interest
      **/
     function totalSupplyInterestOf(address owner) override  external view returns (uint) {
-        UserAccount storage userAcc = userAccounts[owner];
+        UserAccount memory userAcc = userAccounts[owner];
         return userAcc.supplyTotalInterest;
     }
 
@@ -330,7 +330,7 @@ contract Filfi is FilfiMainInterface {
      * @notice Get the total amount of borrow interest
      **/
     function totalBorrowInterestOf(address owner) override  external view returns (uint) {
-        UserAccount storage userAcc = userAccounts[owner];
+        UserAccount memory userAcc = userAccounts[owner];
         return userAcc.borrowTotalInterest;
     }
 
@@ -338,7 +338,7 @@ contract Filfi is FilfiMainInterface {
      * @notice Get the  unClaim amount of supply interest
      **/
     function unClaimSupplyInterestOf(address owner) override  external view returns (uint) {
-        UserAccount storage userAcc = userAccounts[owner];
+        UserAccount memory userAcc = userAccounts[owner];
         return userAcc.unClaimSupplyInterest;
     }
 
@@ -346,7 +346,7 @@ contract Filfi is FilfiMainInterface {
      * @notice Get the rePay amount of borrow interest
      **/
     function unClaimBorrowInterestOf(address owner) override  external view returns (uint) {
-        UserAccount storage userAcc = userAccounts[owner];
+        UserAccount memory userAcc = userAccounts[owner];
         return userAcc.unClaimBorrowInterest;
     }
 

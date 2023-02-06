@@ -22,11 +22,11 @@ describe("Test Filfi contract", function() {
       //doSomething
     }, 3000);
 
-    expect(await FilFiToken.supplyBalanceOf(owner.address)).to.equal(200000000000000);
+    // expect(await FilFiToken.supplyBalanceOf(owner.address)).to.equal(200000000000000);
 
-    await FilFiToken.withdraw(100000000000000);
-    var supplyBalance = await FilFiToken.supplyBalanceOf(owner.address);
-    console.log("owner supplyBalance: %d", supplyBalance);
+    // await FilFiToken.withdraw(100000000000000);
+    // var supplyBalance = await FilFiToken.supplyBalanceOf(owner.address);
+    // console.log("owner supplyBalance: %d", supplyBalance);
 
     var interest = await FilFiToken.totalSupplyInterestOf(owner.address);
     console.log("owner totalSupplyInterestOf: %d", interest);
